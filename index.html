@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline BuJo</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #111111;
+      --muted: #888888;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f0f0f;
+        --fg: #eaeaea;
+        --muted: #777777;
+      }
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+    }
+    header {
+      font-size: 0.75rem;
+      padding: 6px 10px;
+      color: var(--muted);
+    }
+    textarea {
+      width: 100%;
+      height: calc(100vh - 28px);
+      border: none;
+      outline: none;
+      resize: none;
