@@ -11,9 +11,9 @@
     :root {
       --bg: #e5e5e5;          /* desk background */
       --paper: #ffffff;      /* paper */
-      --fg: #111111;
-      --muted: #888888;
-      --caret: #111111;
+      --fg: #0000FF;         /* default text color */
+      --muted: #6b6bdb;      /* muted blue for date/placeholder */
+      --caret: #0000FF;      /* caret color */
       --shadow: rgba(0, 0, 0, 0.15);
     }
 
@@ -21,9 +21,9 @@
       :root {
         --bg: #0b0b0b;
         --paper: #111111;
-        --fg: #eaeaea;
-        --muted: #777777;
-        --caret: #eaeaea;
+        --fg: #0000FF;
+        --muted: #7f7fff;
+        --caret: #0000FF;
         --shadow: rgba(0, 0, 0, 0.4);
       }
     }
@@ -57,6 +57,7 @@
     header {
       padding: 8px 12px 4px;
       font-size: 0.75rem;
+      font-weight: 600;
       color: var(--muted);
       user-select: none;
       border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -79,12 +80,14 @@
       color: var(--fg);
       caret-color: var(--caret);
       font-size: 0.95rem;
+      font-weight: 700;          /* bold by default */
       line-height: 1.4;
       font-family: inherit;
     }
 
     textarea::placeholder {
       color: var(--muted);
+      font-weight: 600;
     }
 
     /* Mobile: allow paper to scale */
