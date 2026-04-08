@@ -5,23 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Minimal Offline Bullet Journal</title>
-
   <meta name="description" content="A 1-page, offline-first Bullet Journal web app. No sync. No accounts. Just write." />
 
   <style>
     :root {
-      --bg: #ffffff;
+      --bg: #e5e5e5;          /* desk background */
+      --paper: #ffffff;      /* paper */
       --fg: #111111;
       --muted: #888888;
       --caret: #111111;
+      --shadow: rgba(0, 0, 0, 0.15);
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #0f0f0f;
+        --bg: #0b0b0b;
+        --paper: #111111;
         --fg: #eaeaea;
         --muted: #777777;
         --caret: #eaeaea;
+        --shadow: rgba(0, 0, 0, 0.4);
       }
     }
 
@@ -35,19 +38,40 @@
       color: var(--fg);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
         Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      padding: 24px 12px;
+    }
+
+    /* A5 paper container */
+    .paper {
+      width: 148mm;
+      min-height: 210mm;
+      background: var(--paper);
+      box-shadow: 0 10px 30px var(--shadow);
+      border-radius: 2px;
+      display: flex;
+      flex-direction: column;
     }
 
     header {
-      padding: 6px 10px;
+      padding: 8px 12px 4px;
       font-size: 0.75rem;
       color: var(--muted);
       user-select: none;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      header {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+      }
     }
 
     textarea {
+      flex: 1;
       width: 100%;
-      height: calc(100vh - 28px);
-      padding: 10px;
+      padding: 10px 12px 14px;
       border: none;
       outline: none;
       resize: none;
@@ -55,24 +79,36 @@
       color: var(--fg);
       caret-color: var(--caret);
       font-size: 0.95rem;
-      line-height: 1.35;
+      line-height: 1.4;
       font-family: inherit;
     }
 
     textarea::placeholder {
       color: var(--muted);
     }
+
+    /* Mobile: allow paper to scale */
+    @media (max-width: 600px) {
+      body {
+        padding: 12px;
+      }
+      .paper {
+        width: 100%;
+        min-height: calc(100vh - 24px);
+      }
+    }
   </style>
 </head>
 
 <body>
-  <header id="date"></header>
-
-  <textarea
-    id="editor"
-    spellcheck="false"
-    placeholder="• Start logging..."
-  ></textarea>
+  <div class="paper">
+    <header id="date"></header>
+    <textarea
+      id="editor"
+      spellcheck="false"
+      placeholder="• Start logging..."
+    ></textarea>
+  </div>
 
   <script>
     // ----- Helpers -----
@@ -123,10 +159,7 @@
 
         localStorage.setItem(storageKey, editor.value);
       }
-    });
 
-    // ----- Prevent accidental tab focus loss -----
-    editor.addEventListener("keydown", (e) => {
       if (e.key === "Tab") {
         e.preventDefault();
       }
