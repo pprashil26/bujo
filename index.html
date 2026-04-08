@@ -3,34 +3,134 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Offline BuJo</title>
+
+  <title>Minimal Offline Bullet Journal</title>
+
+  <meta name="description" content="A 1-page, offline-first Bullet Journal web app. No sync. No accounts. Just write." />
+
   <style>
     :root {
       --bg: #ffffff;
       --fg: #111111;
       --muted: #888888;
+      --caret: #111111;
     }
+
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #0f0f0f;
         --fg: #eaeaea;
         --muted: #777777;
+        --caret: #eaeaea;
       }
     }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--fg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, sans-serif;
     }
+
     header {
-      font-size: 0.75rem;
       padding: 6px 10px;
+      font-size: 0.75rem;
       color: var(--muted);
+      user-select: none;
     }
+
     textarea {
       width: 100%;
       height: calc(100vh - 28px);
+      padding: 10px;
       border: none;
       outline: none;
       resize: none;
+      background: transparent;
+      color: var(--fg);
+      caret-color: var(--caret);
+      font-size: 0.95rem;
+      line-height: 1.35;
+      font-family: inherit;
+    }
+
+    textarea::placeholder {
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+  <header id="date"></header>
+
+  <textarea
+    id="editor"
+    spellcheck="false"
+    placeholder="• Start logging..."
+  ></textarea>
+
+  <script>
+    // ----- Helpers -----
+    function getTodayKey() {
+      return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    }
+
+    function formatDate() {
+      return new Date().toDateString();
+    }
+
+    // ----- Elements -----
+    const editor = document.getElementById("editor");
+    const dateEl = document.getElementById("date");
+
+    const storageKey = "bujo-" + getTodayKey();
+
+    // ----- Init -----
+    dateEl.textContent = formatDate();
+
+    const saved = localStorage.getItem(storageKey);
+    editor.value = saved ? saved : "• ";
+    editor.focus();
+
+    // ----- Autosave -----
+    editor.addEventListener("input", () => {
+      localStorage.setItem(storageKey, editor.value);
+    });
+
+    // ----- Bullet on Enter -----
+    editor.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        const value = editor.value;
+
+        const insertion = "\n• ";
+
+        editor.value =
+          value.slice(0, start) +
+          insertion +
+          value.slice(end);
+
+        editor.selectionStart = editor.selectionEnd =
+          start + insertion.length;
+
+        localStorage.setItem(storageKey, editor.value);
+      }
+    });
+
+    // ----- Prevent accidental tab focus loss -----
+    editor.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>
