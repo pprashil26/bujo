@@ -55,18 +55,36 @@
     }
 
     header {
-      padding: 8px 12px 4px;
+      padding: 6px 8px;
       font-size: 0.75rem;
       font-weight: 600;
       color: var(--muted);
       user-select: none;
       border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
 
     @media (prefers-color-scheme: dark) {
       header {
         border-bottom-color: rgba(255, 255, 255, 0.08);
       }
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+
+    .copy-btn:active {
+      opacity: 0.6;
     }
 
     textarea {
@@ -80,7 +98,7 @@
       color: var(--fg);
       caret-color: var(--caret);
       font-size: 0.95rem;
-      font-weight: 700;          /* bold by default */
+      font-weight: 700; /* bold by default */
       line-height: 1.4;
       font-family: inherit;
     }
@@ -105,7 +123,11 @@
 
 <body>
   <div class="paper">
-    <header id="date"></header>
+    <header>
+      <span id="date"></span>
+      <button class="copy-btn" id="copyAll" title="Copy all">Copy</button>
+    </header>
+
     <textarea
       id="editor"
       spellcheck="false"
@@ -126,6 +148,7 @@
     // ----- Elements -----
     const editor = document.getElementById("editor");
     const dateEl = document.getElementById("date");
+    const copyBtn = document.getElementById("copyAll");
 
     const storageKey = "bujo-" + getTodayKey();
 
@@ -149,22 +172,28 @@
         const start = editor.selectionStart;
         const end = editor.selectionEnd;
         const value = editor.value;
-
         const insertion = "\n• ";
 
-        editor.value =
-          value.slice(0, start) +
-          insertion +
-          value.slice(end);
-
-        editor.selectionStart = editor.selectionEnd =
-          start + insertion.length;
+        editor.value = value.slice(0, start) + insertion + value.slice(end);
+        editor.selectionStart = editor.selectionEnd = start + insertion.length;
 
         localStorage.setItem(storageKey, editor.value);
       }
 
-      if (e.key === "Tab") {
-        e.preventDefault();
+      if (e.key === "Tab") e.preventDefault();
+    });
+
+    // ----- Copy All Content -----
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(editor.value);
+        copyBtn.textContent = "Copied";
+        setTimeout(() => (copyBtn.textContent = "Copy"), 1000);
+      } catch {
+        editor.select();
+        document.execCommand("copy");
+        copyBtn.textContent = "Copied";
+        setTimeout(() => (copyBtn.textContent = "Copy"), 1000);
       }
     });
   </script>
