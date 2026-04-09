@@ -15,6 +15,10 @@
       --muted: #6b6bdb;      /* muted blue for date/placeholder */
       --caret: #0000FF;      /* caret color */
       --shadow: rgba(0, 0, 0, 0.15);
+      --line: rgba(0, 0, 0, 0.06);
+
+      --sidebarW: 220px;     /* compact sidebar width */
+      --sidebarTabW: 28px;   /* collapsed tab width */
     }
 
     @media (prefers-color-scheme: dark) {
@@ -25,12 +29,11 @@
         --muted: #7f7fff;
         --caret: #0000FF;
         --shadow: rgba(0, 0, 0, 0.4);
+        --line: rgba(255, 255, 255, 0.10);
       }
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -43,6 +46,14 @@
       padding: 24px 12px;
     }
 
+    /* Layout wrapper to host paper + sidebar */
+    .wrap {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
     /* A5 paper container */
     .paper {
       width: 148mm;
@@ -52,6 +63,7 @@
       border-radius: 2px;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     header {
@@ -60,20 +72,20 @@
       font-weight: 600;
       color: var(--muted);
       user-select: none;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      border-bottom: 1px solid var(--line);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
     }
 
-    @media (prefers-color-scheme: dark) {
-      header {
-        border-bottom-color: rgba(255, 255, 255, 0.08);
-      }
+    .hdr-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .copy-btn {
+    .btn {
       background: transparent;
       border: none;
       color: var(--muted);
@@ -81,11 +93,10 @@
       font-weight: 600;
       cursor: pointer;
       padding: 2px 4px;
+      line-height: 1;
     }
 
-    .copy-btn:active {
-      opacity: 0.6;
-    }
+    .btn:active { opacity: 0.6; }
 
     textarea {
       flex: 1;
@@ -108,31 +119,187 @@
       font-weight: 600;
     }
 
-    /* Mobile: allow paper to scale */
+    /* --- Compact collapsible TODO sidebar --- */
+    .sidebar {
+      width: var(--sidebarW);
+      min-height: 210mm;
+      background: var(--paper);
+      box-shadow: 0 10px 30px var(--shadow);
+      border-radius: 2px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: width 160ms ease;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebarTabW);
+    }
+
+    .side-header {
+      padding: 6px 6px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      color: var(--muted);
+      user-select: none;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .side-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 1;
+      transition: opacity 120ms ease;
+    }
+
+    .sidebar.collapsed .side-title {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .side-toggle {
+      width: 100%;
+      max-width: 24px;
+      text-align: center;
+      padding: 2px 0;
+    }
+
+    .todo {
+      flex: 1;
+      width: 100%;
+      padding: 8px;
+      border: none;
+      outline: none;
+      resize: none;
+      background: transparent;
+      color: var(--fg);
+      caret-color: var(--caret);
+      font-size: 0.85rem;
+      font-weight: 700;
+      line-height: 1.35;
+      font-family: inherit;
+    }
+
+    .sidebar.collapsed .todo {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .side-footer {
+      padding: 6px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.7rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .sidebar.collapsed .side-footer {
+      opacity: 0;
+      pointer-events: none;
+      height: 0;
+      padding: 0;
+      border-top: none;
+    }
+
+    /* Mobile: sidebar becomes a slide-in drawer */
     @media (max-width: 600px) {
-      body {
-        padding: 12px;
+      body { padding: 12px; }
+
+      .wrap {
+        width: 100%;
       }
+
       .paper {
         width: 100%;
         min-height: calc(100vh - 24px);
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        height: calc(100vh - 24px);
+        min-height: unset;
+        width: min(var(--sidebarW), calc(100vw - 24px));
+        z-index: 50;
+        transform: translateX(calc(100% + 12px));
+        transition: transform 180ms ease;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      /* collapsed state not used on mobile; we slide instead */
+      .sidebar.collapsed { width: min(var(--sidebarW), calc(100vw - 24px)); }
+      .sidebar.collapsed .todo,
+      .sidebar.collapsed .side-footer,
+      .sidebar.collapsed .side-title { opacity: 1; pointer-events: auto; }
+
+      /* optional dimmer */
+      .dimmer {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.25);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 180ms ease;
+        z-index: 40;
+      }
+      .dimmer.on {
+        opacity: 1;
+        pointer-events: auto;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="paper">
-    <header>
-      <span id="date"></span>
-      <button class="copy-btn" id="copyAll" title="Copy all">Copy</button>
-    </header>
+  <div class="wrap">
+    <div class="paper">
+      <header>
+        <span id="date"></span>
+        <span class="hdr-right">
+          <button class="btn" id="todoToggle" title="Toggle todo">Todo</button>
+          <button class="btn" id="copyAll" title="Copy all">Copy</button>
+        </span>
+      </header>
 
-    <textarea
-      id="editor"
-      spellcheck="false"
-      placeholder="• Start logging..."
-    ></textarea>
+      <textarea
+        id="editor"
+        spellcheck="false"
+        placeholder="• Start logging..."
+      ></textarea>
+    </div>
+
+    <!-- Sidebar (desktop: collapsible; mobile: slide-in) -->
+    <aside class="sidebar collapsed" id="sidebar">
+      <div class="side-header">
+        <span class="side-title">TODO</span>
+        <button class="btn side-toggle" id="sideBtn" aria-label="Toggle todo">≡</button>
+      </div>
+
+      <textarea
+        id="todo"
+        class="todo"
+        spellcheck="false"
+        placeholder="• Todo...\n• ..."
+      ></textarea>
+
+      <div class="side-footer">
+        <span>Local</span>
+        <button class="btn" id="todoCopy" title="Copy todo">Copy</button>
+      </div>
+    </aside>
+
+    <div class="dimmer" id="dimmer" aria-hidden="true"></div>
   </div>
 
   <script>
@@ -145,55 +312,134 @@
       return new Date().toDateString();
     }
 
+    function isMobile() {
+      return window.matchMedia("(max-width: 600px)").matches;
+    }
+
     // ----- Elements -----
     const editor = document.getElementById("editor");
     const dateEl = document.getElementById("date");
     const copyBtn = document.getElementById("copyAll");
 
+    const sidebar = document.getElementById("sidebar");
+    const todo = document.getElementById("todo");
+    const sideBtn = document.getElementById("sideBtn");
+    const todoToggle = document.getElementById("todoToggle");
+    const todoCopy = document.getElementById("todoCopy");
+    const dimmer = document.getElementById("dimmer");
+
     const storageKey = "bujo-" + getTodayKey();
+    const todoKey = "bujo-todo"; // persistent across days
 
     // ----- Init -----
     dateEl.textContent = formatDate();
 
     const saved = localStorage.getItem(storageKey);
     editor.value = saved ? saved : "• ";
+
+    const savedTodo = localStorage.getItem(todoKey);
+    todo.value = savedTodo ? savedTodo : "• ";
+
+    // focus journal by default
     editor.focus();
 
-    // ----- Autosave -----
+    // ----- Autosave journal -----
     editor.addEventListener("input", () => {
       localStorage.setItem(storageKey, editor.value);
     });
 
-    // ----- Bullet on Enter -----
+    // ----- Autosave todo -----
+    todo.addEventListener("input", () => {
+      localStorage.setItem(todoKey, todo.value);
+    });
+
+    // ----- Bullet on Enter (journal) -----
     editor.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-
         const start = editor.selectionStart;
         const end = editor.selectionEnd;
         const value = editor.value;
         const insertion = "\n• ";
-
         editor.value = value.slice(0, start) + insertion + value.slice(end);
         editor.selectionStart = editor.selectionEnd = start + insertion.length;
-
         localStorage.setItem(storageKey, editor.value);
       }
-
       if (e.key === "Tab") e.preventDefault();
     });
 
-    // ----- Copy All Content -----
-    copyBtn.addEventListener("click", async () => {
+    // ----- Bullet on Enter (todo) -----
+    todo.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const start = todo.selectionStart;
+        const end = todo.selectionEnd;
+        const value = todo.value;
+        const insertion = "\n• ";
+        todo.value = value.slice(0, start) + insertion + value.slice(end);
+        todo.selectionStart = todo.selectionEnd = start + insertion.length;
+        localStorage.setItem(todoKey, todo.value);
+      }
+      if (e.key === "Tab") e.preventDefault();
+    });
+
+    // ----- Copy helpers -----
+    async function copyText(text, btn) {
       try {
-        await navigator.clipboard.writeText(editor.value);
-        copyBtn.textContent = "Copied";
-        setTimeout(() => (copyBtn.textContent = "Copy"), 1000);
+        await navigator.clipboard.writeText(text);
       } catch {
-        editor.select();
-        document.execCommand("copy");
-        copyBtn.textContent = "Copied";
-        setTimeout(() => (copyBtn.textContent = "Copy"), 1000);
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      if (btn) {
+        const prev = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(() => (btn.textContent = prev), 1000);
+      }
+    }
+
+    // ----- Copy All Content (journal) -----
+    copyBtn.addEventListener("click", () => copyText(editor.value, copyBtn));
+
+    // ----- Copy Todo -----
+    todoCopy.addEventListener("click", () => copyText(todo.value, todoCopy));
+
+    // ----- Sidebar toggle (desktop: collapse/expand; mobile: slide in/out) -----
+    function openMobileSidebar(open) {
+      sidebar.classList.toggle('open', open);
+      dimmer.classList.toggle('on', open);
+      if (open) setTimeout(() => todo.focus(), 0);
+      else setTimeout(() => editor.focus(), 0);
+    }
+
+    function toggleSidebar() {
+      if (isMobile()) {
+        openMobileSidebar(!sidebar.classList.contains('open'));
+      } else {
+        sidebar.classList.toggle('collapsed');
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        if (!isCollapsed) setTimeout(() => todo.focus(), 0);
+        else setTimeout(() => editor.focus(), 0);
+      }
+    }
+
+    sideBtn.addEventListener('click', toggleSidebar);
+    todoToggle.addEventListener('click', toggleSidebar);
+
+    dimmer?.addEventListener('click', () => openMobileSidebar(false));
+
+    // Keep mobile drawer state sane on resize
+    window.addEventListener('resize', () => {
+      if (!isMobile()) {
+        sidebar.classList.remove('open');
+        dimmer.classList.remove('on');
       }
     });
   </script>
