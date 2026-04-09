@@ -5,63 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Minimal Offline Bullet Journal</title>
-  <meta name="description" content="A 1-page, offline-first Bullet Journal web app. No sync. No accounts. Just write." />
+  <meta name="description" content="A 1-page, offline-first Bullet Journal web app." />
 
   <style>
     :root {
-      --bg: #e5e5e5;          /* desk background */
-      --paper: #ffffff;      /* paper */
-      --fg: #0000FF;         /* default text color */
-      --muted: #6b6bdb;      /* muted blue for date/placeholder */
-      --caret: #0000FF;      /* caret color */
-      --shadow: rgba(0, 0, 0, 0.15);
-      --line: rgba(0, 0, 0, 0.06);
+      --bg: #e5e5e5;
+      --paper: #ffffff;
+      --fg: #0000FF;
+      --muted: #6b6bdb;
+      --caret: #0000FF;
+      --shadow: rgba(0,0,0,0.15);
+      --line: rgba(0,0,0,0.06);
 
-      --sidebarW: 220px;     /* compact sidebar width */
-      --sidebarTabW: 28px;   /* collapsed tab width */
+      --sidebarW: 220px;
+      --sidebarTabW: 28px;
+      --sidebarFontSize: 0.7rem;
     }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0b0b0b;
-        --paper: #111111;
-        --fg: #0000FF;
-        --muted: #7f7fff;
-        --caret: #0000FF;
-        --shadow: rgba(0, 0, 0, 0.4);
-        --line: rgba(255, 255, 255, 0.10);
-      }
-    }
-
-    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       background: var(--bg);
       color: var(--fg);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        Roboto, Helvetica, Arial, sans-serif;
+      font-family: system-ui, sans-serif;
       display: flex;
       justify-content: center;
       padding: 24px 12px;
     }
 
-    .wrap {
-      position: relative;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
+    .wrap { display: flex; gap: 10px; }
 
     .paper {
       width: 148mm;
       min-height: 210mm;
       background: var(--paper);
       box-shadow: 0 10px 30px var(--shadow);
-      border-radius: 2px;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
     }
 
     header {
@@ -69,137 +48,68 @@
       font-size: 0.75rem;
       font-weight: 600;
       color: var(--muted);
-      user-select: none;
       border-bottom: 1px solid var(--line);
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 8px;
-    }
-
-    .hdr-right {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
     }
 
     .btn {
-      background: transparent;
+      background: none;
       border: none;
       color: var(--muted);
-      font-size: 0.75rem;
-      font-weight: 600;
       cursor: pointer;
-      padding: 2px 4px;
-      line-height: 1;
+      font-size: 0.75rem;
     }
-
-    .btn:active { opacity: 0.6; }
 
     textarea {
       flex: 1;
-      width: 100%;
-      padding: 10px 12px 14px;
       border: none;
-      outline: none;
       resize: none;
+      outline: none;
+      padding: 10px 12px;
       background: transparent;
       color: var(--fg);
       caret-color: var(--caret);
       font-size: 0.95rem;
       font-weight: 700;
-      line-height: 1.4;
-      font-family: inherit;
-    }
-
-    textarea::placeholder {
-      color: var(--muted);
-      font-weight: 600;
     }
 
     .sidebar {
       width: var(--sidebarW);
-      min-height: 210mm;
       background: var(--paper);
       box-shadow: 0 10px 30px var(--shadow);
-      border-radius: 2px;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: width 160ms ease;
+      transition: width 160ms;
+      font-size: var(--sidebarFontSize);
+      font-weight: 400;
     }
 
     .sidebar.collapsed { width: var(--sidebarTabW); }
 
     .side-header {
-      padding: 6px 6px;
+      padding: 6px;
       border-bottom: 1px solid var(--line);
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 6px;
       color: var(--muted);
-      user-select: none;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
-
-    .side-title {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      opacity: 1;
-      transition: opacity 120ms ease;
-    }
-
-    .sidebar.collapsed .side-title {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .side-toggle {
-      width: 100%;
-      max-width: 24px;
-      text-align: center;
-      padding: 2px 0;
     }
 
     .todo {
       flex: 1;
-      width: 100%;
-      padding: 8px;
       border: none;
-      outline: none;
       resize: none;
       background: transparent;
-      color: var(--fg);
-      caret-color: var(--caret);
-      font-size: 0.85rem;
-      font-weight: 700;
-      line-height: 1.35;
-      font-family: inherit;
+      padding: 8px;
+      font-size: var(--sidebarFontSize);
     }
-
-    .sidebar.collapsed .todo { opacity: 0; pointer-events: none; }
 
     .side-footer {
       padding: 6px;
       border-top: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       display: flex;
       justify-content: space-between;
-      gap: 6px;
-    }
-
-    .sidebar.collapsed .side-footer {
-      opacity: 0; pointer-events: none; height: 0; padding: 0; border-top: none;
-    }
-
-    @media (max-width: 600px) {
-      body { padding: 12px; }
-      .wrap { width: 100%; }
-      .paper { width: 100%; min-height: calc(100vh - 24px); }
     }
   </style>
 </head>
@@ -209,20 +119,20 @@
     <div class="paper">
       <header>
         <span id="date"></span>
-        <span class="hdr-right">
+        <span>
           <button class="btn" id="todoToggle">Todo</button>
           <button class="btn" id="copyAll">Copy</button>
         </span>
       </header>
-      <textarea id="editor" spellcheck="false" placeholder="• Start logging..."></textarea>
+      <textarea id="editor">• </textarea>
     </div>
 
     <aside class="sidebar collapsed" id="sidebar">
       <div class="side-header">
-        <span class="side-title">TODO</span>
-        <button class="btn side-toggle" id="sideBtn">≡</button>
+        <span>TODO</span>
+        <button class="btn" id="sideBtn">≡</button>
       </div>
-      <textarea id="todo" class="todo" spellcheck="false" placeholder="• Todo...\n• ..."></textarea>
+      <textarea id="todo" class="todo">• </textarea>
       <div class="side-footer">
         <span>Local</span>
         <button class="btn" id="todoCopy">Copy</button>
@@ -230,80 +140,46 @@
     </aside>
   </div>
 
-  <script>
-    // --- helpers ---
-    function getTodayKey() {
-      return new Date().toISOString().slice(0, 10);
-    }
-    function formatDate() {
-      return new Date().toDateString();
-    }
+<script>
+  const VERSION_KEY = 'bujo:version';
+  const APP_VERSION = '1.0.0';
+  if (localStorage.getItem(VERSION_KEY) !== APP_VERSION) {
+    localStorage.setItem(VERSION_KEY, APP_VERSION);
+  }
 
-    // --- elements ---
-    const editor = document.getElementById('editor');
-    const todo = document.getElementById('todo');
-    const dateEl = document.getElementById('date');
-    const sidebar = document.getElementById('sidebar');
+  const today = new Date().toISOString().slice(0,10);
+  const journalKey = 'bujo-' + today;
+  const todoKey = 'bujo-todo';
 
-    // --- storage keys ---
-    const journalKey = 'bujo-' + getTodayKey();
-    const legacyKey = 'bujo';          // ← migration support ONLY
-    const todoKey = 'bujo-todo';
+  editor.value = localStorage.getItem(journalKey) ?? '• ';
+  todo.value = localStorage.getItem(todoKey) ?? '• ';
 
-    // --- init (SAFE LOAD) ---
-    dateEl.textContent = formatDate();
+  editor.oninput = () => localStorage.setItem(journalKey, editor.value);
+  todo.oninput = () => localStorage.setItem(todoKey, todo.value);
 
-    const existingJournal =
-      localStorage.getItem(journalKey) ??
-      localStorage.getItem(legacyKey) ??
-      '• ';
+  function bullet(el,key){
+    el.onkeydown = e=>{
+      if(e.key==='Enter'){
+        e.preventDefault();
+        const s=el.selectionStart;
+        el.value = el.value.slice(0,s)+'\n• '+el.value.slice(s);
+        el.selectionStart = el.selectionEnd = s+3;
+        localStorage.setItem(key, el.value);
+      }
+    };
+  }
 
-    editor.value = existingJournal;
+  bullet(editor,journalKey);
+  bullet(todo,todoKey);
 
-    todo.value = localStorage.getItem(todoKey) ?? '• ';
+  date.textContent = new Date().toDateString();
 
-    editor.focus();
+  copyAll.onclick = ()=>navigator.clipboard.writeText(editor.value);
+  todoCopy.onclick = ()=>navigator.clipboard.writeText(todo.value);
 
-    // --- save ONLY on user input ---
-    editor.addEventListener('input', () => {
-      localStorage.setItem(journalKey, editor.value);
-    });
-
-    todo.addEventListener('input', () => {
-      localStorage.setItem(todoKey, todo.value);
-    });
-
-    // --- bullet on Enter (journal + todo) ---
-    function bulletHandler(el, key) {
-      el.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const s = el.selectionStart;
-          const v = el.value;
-          el.value = v.slice(0, s) + '\n• ' + v.slice(s);
-          el.selectionStart = el.selectionEnd = s + 3;
-          localStorage.setItem(key, el.value);
-        }
-      });
-    }
-
-    bulletHandler(editor, journalKey);
-    bulletHandler(todo, todoKey);
-
-    // --- copy helpers ---
-    const copyAll = document.getElementById('copyAll');
-    const todoCopy = document.getElementById('todoCopy');
-
-    copyAll.onclick = () => navigator.clipboard.writeText(editor.value);
-    todoCopy.onclick = () => navigator.clipboard.writeText(todo.value);
-
-    // --- sidebar toggle (UNCHANGED) ---
-    function toggleSidebar() {
-      sidebar.classList.toggle('collapsed');
-    }
-
-    document.getElementById('todoToggle').onclick = toggleSidebar;
-    document.getElementById('sideBtn').onclick = toggleSidebar;
-  </script>
+  const toggle = ()=>sidebar.classList.toggle('collapsed');
+  todoToggle.onclick = toggle;
+  sideBtn.onclick = toggle;
+</script>
 </body>
 </html>
