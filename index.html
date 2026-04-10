@@ -122,6 +122,7 @@
         <span>
           <button class="btn" id="todoToggle">Todo</button>
           <button class="btn" id="copyAll">Copy</button>
+          <button class="btn" id="exportAll">Export</button>
         </span>
       </header>
       <textarea id="editor">• </textarea>
@@ -141,22 +142,26 @@
   </div>
 
 <script>
+  /* ---------- VERSION ---------- */
   const VERSION_KEY = 'bujo:version';
   const APP_VERSION = '1.0.0';
   if (localStorage.getItem(VERSION_KEY) !== APP_VERSION) {
     localStorage.setItem(VERSION_KEY, APP_VERSION);
   }
 
+  /* ---------- KEYS ---------- */
   const today = new Date().toISOString().slice(0,10);
   const journalKey = 'bujo-' + today;
   const todoKey = 'bujo-todo';
 
+  /* ---------- LOAD ---------- */
   editor.value = localStorage.getItem(journalKey) ?? '• ';
-  todo.value = localStorage.getItem(todoKey) ?? '• ';
+  todo.value   = localStorage.getItem(todoKey)   ?? '• ';
 
   editor.oninput = () => localStorage.setItem(journalKey, editor.value);
-  todo.oninput = () => localStorage.setItem(todoKey, todo.value);
+  todo.oninput   = () => localStorage.setItem(todoKey, todo.value);
 
+  /* ---------- BULLET ---------- */
   function bullet(el,key){
     el.onkeydown = e=>{
       if(e.key==='Enter'){
@@ -168,18 +173,33 @@
       }
     };
   }
-
   bullet(editor,journalKey);
   bullet(todo,todoKey);
 
+  /* ---------- DATE ---------- */
   date.textContent = new Date().toDateString();
 
-  copyAll.onclick = ()=>navigator.clipboard.writeText(editor.value);
+  /* ---------- COPY ---------- */
+  copyAll.onclick  = ()=>navigator.clipboard.writeText(editor.value);
   todoCopy.onclick = ()=>navigator.clipboard.writeText(todo.value);
 
+  /* ---------- EXPORT ---------- */
+  exportAll.onclick = () => {
+    const blob = new Blob([editor.value], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bujo-${today}.txt`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  };
+
+  /* ---------- SIDEBAR ---------- */
   const toggle = ()=>sidebar.classList.toggle('collapsed');
   todoToggle.onclick = toggle;
-  sideBtn.onclick = toggle;
+  sideBtn.onclick    = toggle;
 </script>
 </body>
 </html>
