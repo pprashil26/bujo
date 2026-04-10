@@ -72,6 +72,8 @@
       caret-color: var(--caret);
       font-size: 0.95rem;
       font-weight: 700;
+      line-height: 1.4;
+      font-family: inherit;
     }
 
     .sidebar {
@@ -154,52 +156,98 @@
   const journalKey = 'bujo-' + today;
   const todoKey = 'bujo-todo';
 
-  /* ---------- LOAD ---------- */
   editor.value = localStorage.getItem(journalKey) ?? '• ';
   todo.value   = localStorage.getItem(todoKey)   ?? '• ';
 
   editor.oninput = () => localStorage.setItem(journalKey, editor.value);
   todo.oninput   = () => localStorage.setItem(todoKey, todo.value);
 
-  /* ---------- BULLET ---------- */
-  function bullet(el,key){
-    el.onkeydown = e=>{
-      if(e.key==='Enter'){
+  /* ---------- HELPERS ---------- */
+  function getLineStart(text, pos) {
+    return text.lastIndexOf('\n', pos - 1) + 1;
+  }
+
+  function getIndent(text, lineStart) {
+    const match = text.slice(lineStart).match(/^[ \t]*/);
+    return match ? match[0] : '';
+  }
+
+  function indentHandler(el, key) {
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Tab') {
         e.preventDefault();
-        const s=el.selectionStart;
-        el.value = el.value.slice(0,s)+'\n• '+el.value.slice(s);
-        el.selectionStart = el.selectionEnd = s+3;
+
+        const start = el.selectionStart;
+        const text = el.value;
+        const lineStart = getLineStart(text, start);
+
+        if (e.shiftKey) {
+          if (text.startsWith('  ', lineStart)) {
+            el.value =
+              text.slice(0, lineStart) +
+              text.slice(lineStart + 2);
+            el.selectionStart = el.selectionEnd = start - 2;
+          }
+        } else {
+          el.value =
+            text.slice(0, lineStart) +
+            '  ' +
+            text.slice(lineStart);
+          el.selectionStart = el.selectionEnd = start + 2;
+        }
+
         localStorage.setItem(key, el.value);
       }
-    };
+    });
   }
-  bullet(editor,journalKey);
-  bullet(todo,todoKey);
+
+  /* ---------- BULLET + AUTO‑INDENT ---------- */
+  function bullet(el, key) {
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+
+        const pos = el.selectionStart;
+        const text = el.value;
+        const lineStart = getLineStart(text, pos);
+        const indent = getIndent(text, lineStart);
+
+        const insertion = '\n' + indent + '• ';
+        el.value = text.slice(0, pos) + insertion + text.slice(pos);
+        el.selectionStart = el.selectionEnd = pos + insertion.length;
+
+        localStorage.setItem(key, el.value);
+      }
+    });
+
+    indentHandler(el, key);
+  }
+
+  bullet(editor, journalKey);
+  bullet(todo, todoKey);
 
   /* ---------- DATE ---------- */
   date.textContent = new Date().toDateString();
 
   /* ---------- COPY ---------- */
-  copyAll.onclick  = ()=>navigator.clipboard.writeText(editor.value);
-  todoCopy.onclick = ()=>navigator.clipboard.writeText(todo.value);
+  copyAll.onclick  = () => navigator.clipboard.writeText(editor.value);
+  todoCopy.onclick = () => navigator.clipboard.writeText(todo.value);
 
   /* ---------- EXPORT ---------- */
   exportAll.onclick = () => {
     const blob = new Blob([editor.value], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement('a');
     a.href = url;
     a.download = `bujo-${today}.txt`;
     a.click();
-
     URL.revokeObjectURL(url);
   };
 
   /* ---------- SIDEBAR ---------- */
-  const toggle = ()=>sidebar.classList.toggle('collapsed');
+  const toggle = () => sidebar.classList.toggle('collapsed');
   todoToggle.onclick = toggle;
-  sideBtn.onclick    = toggle;
+  sideBtn.onclick = toggle;
 </script>
 </body>
 </html>
