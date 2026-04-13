@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Minimal Offline Bullet Journal</title>
-  <meta name="description" content="A 1-page, offline-first Bullet Journal web app." />
+  <meta name="description" content="A 1-page, offline-first notepad + todo." />
 
   <style>
     :root {
@@ -158,12 +158,22 @@
 <script>
   /* ---------- VERSION ---------- */
   const VERSION_KEY = 'bujo:version';
-  const APP_VERSION = '1.0.0';
+  const APP_VERSION = '2.0.0'; // switched to continuous notepad key
   if (localStorage.getItem(VERSION_KEY) !== APP_VERSION) {
     localStorage.setItem(VERSION_KEY, APP_VERSION);
   }
 
-  /* ---------- ELEMENTS (FIX: explicit bindings, required esp. on iPhone) ---------- */
+  /* ---------- REQUEST PERSISTENT STORAGE (helps on iOS PWA) ---------- */
+  (async function requestPersistentStorage() {
+    try {
+      if (navigator.storage?.persisted && navigator.storage?.persist) {
+        const already = await navigator.storage.persisted();
+        if (!already) await navigator.storage.persist();
+      }
+    } catch (_) {}
+  })();
+
+  /* ---------- ELEMENTS ---------- */
   const editor     = document.getElementById('editor');
   const todo       = document.getElementById('todo');
   const dateEl     = document.getElementById('date');
@@ -175,32 +185,69 @@
   const todoCopy   = document.getElementById('todoCopy');
   const exportAll  = document.getElementById('exportAll');
 
-  /* ---------- KEYS ---------- */
-  const today = new Date().toISOString().slice(0,10);
-  const journalKey = 'bujo-' + today;
+  /* ---------- STABLE KEYS (NO DATE) ---------- */
+  const noteKey = 'bujo:notepad';
   const todoKey = 'bujo-todo';
 
-  /* ---------- LOAD ---------- */
-  editor.value = localStorage.getItem(journalKey) ?? '• ';
-  todo.value   = localStorage.getItem(todoKey)   ?? '• ';
+  /* ---------- SNAPSHOT KEYS (extra safety across future updates) ---------- */
+  const lastNoteKey = 'bujo:lastNotepad';
+  const lastTodoKey = 'bujo:lastTodo';
+
+  /* ---------- OPTIONAL LEGACY RESCUE (from older date-based versions) ---------- */
+  // If you previously used date keys bujo-YYYY-MM-DD, this can pull the most recent one
+  // ONCE, to avoid “my old notes vanished after update”.
+  (function rescueFromOldKeysOnce() {
+    const doneKey = 'bujo:migratedToNotepad';
+    if (localStorage.getItem(doneKey)) return;
+
+    // find all old journal keys like bujo-YYYY-MM-DD
+    const keys = Object.keys(localStorage).filter(k => /^bujo-\d{4}-\d{2}-\d{2}$/.test(k));
+    if (keys.length) {
+      keys.sort(); // YYYY-MM-DD sorts correctly
+      const latestKey = keys[keys.length - 1];
+      const old = localStorage.getItem(latestKey);
+      if (old && !localStorage.getItem(noteKey)) {
+        localStorage.setItem(noteKey, old);
+        localStorage.setItem(lastNoteKey, old);
+      }
+    }
+    localStorage.setItem(doneKey, '1');
+  })();
+
+  /* ---------- LOAD (never overwrites) ---------- */
+  editor.value =
+    localStorage.getItem(noteKey) ??
+    localStorage.getItem(lastNoteKey) ??
+    '• ';
+
+  todo.value =
+    localStorage.getItem(todoKey) ??
+    localStorage.getItem(lastTodoKey) ??
+    '• ';
 
   /* ---------- SAVE (ALWAYS) ---------- */
-  function saveJournal() { localStorage.setItem(journalKey, editor.value); }
-  function saveTodo()    { localStorage.setItem(todoKey, todo.value); }
+  function saveNote() {
+    localStorage.setItem(noteKey, editor.value);
+    localStorage.setItem(lastNoteKey, editor.value);
+  }
 
-  // Save on every relevant signal (covers iPhone Safari edge cases)
+  function saveTodo() {
+    localStorage.setItem(todoKey, todo.value);
+    localStorage.setItem(lastTodoKey, todo.value);
+  }
+
   ['input','keyup','change','paste','cut','compositionend'].forEach(evt => {
-    editor.addEventListener(evt, saveJournal, { passive: true });
+    editor.addEventListener(evt, saveNote, { passive: true });
     todo.addEventListener(evt, saveTodo, { passive: true });
   });
 
-  // Save when app/tab is backgrounded or page is being closed
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') { saveJournal(); saveTodo(); }
+    if (document.visibilityState === 'hidden') { saveNote(); saveTodo(); }
   });
-  window.addEventListener('pagehide', () => { saveJournal(); saveTodo(); });
+  window.addEventListener('pagehide', () => { saveNote(); saveTodo(); });
+  window.addEventListener('beforeunload', () => { saveNote(); saveTodo(); });
 
-  /* ---------- HELPERS ---------- */
+  /* ---------- HELPERS (indent + bullets) ---------- */
   function getLineStart(text, pos) {
     return text.lastIndexOf('\n', pos - 1) + 1;
   }
@@ -233,7 +280,6 @@
     });
   }
 
-  /* ---------- BULLET + AUTO‑INDENT ---------- */
   function bullet(el, saveFn) {
     el.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
@@ -255,10 +301,10 @@
     indentHandler(el, saveFn);
   }
 
-  bullet(editor, saveJournal);
+  bullet(editor, saveNote);
   bullet(todo, saveTodo);
 
-  /* ---------- DATE ---------- */
+  /* ---------- DATE DISPLAY (display-only; no storage impact) ---------- */
   dateEl.textContent = new Date().toDateString();
 
   /* ---------- COPY ---------- */
@@ -271,7 +317,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `bujo-${today}.txt`;
+    a.download = `bujo-notepad.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
