@@ -75,7 +75,7 @@
       color: var(--fg);
       caret-color: var(--caret);
       font-size: 0.95rem;
-      font-weight: 400;
+      font-weight: 400; /* CHANGED: regular (not bold) */
       line-height: 1.4;
       font-family: inherit;
     }
@@ -193,17 +193,20 @@
   const lastNoteKey = 'bujo:lastNotepad';
   const lastTodoKey = 'bujo:lastTodo';
 
+  /* ---------- HANGING INDENT (textarea-friendly approximation) ---------- */
+  // Adds extra spaces after "• " so wrapped text visually lines up after the bullet.
+  // Tune 3–6 to taste.
+  const HANG_SPACES = 4;
+  const HANG = ' '.repeat(HANG_SPACES);
+
   /* ---------- OPTIONAL LEGACY RESCUE (from older date-based versions) ---------- */
-  // If you previously used date keys bujo-YYYY-MM-DD, this can pull the most recent one
-  // ONCE, to avoid “my old notes vanished after update”.
   (function rescueFromOldKeysOnce() {
     const doneKey = 'bujo:migratedToNotepad';
     if (localStorage.getItem(doneKey)) return;
 
-    // find all old journal keys like bujo-YYYY-MM-DD
     const keys = Object.keys(localStorage).filter(k => /^bujo-\d{4}-\d{2}-\d{2}$/.test(k));
     if (keys.length) {
-      keys.sort(); // YYYY-MM-DD sorts correctly
+      keys.sort();
       const latestKey = keys[keys.length - 1];
       const old = localStorage.getItem(latestKey);
       if (old && !localStorage.getItem(noteKey)) {
@@ -218,12 +221,12 @@
   editor.value =
     localStorage.getItem(noteKey) ??
     localStorage.getItem(lastNoteKey) ??
-    '• ';
+    ('• ' + HANG);
 
   todo.value =
     localStorage.getItem(todoKey) ??
     localStorage.getItem(lastTodoKey) ??
-    '• ';
+    ('• ' + HANG);
 
   /* ---------- SAVE (ALWAYS) ---------- */
   function saveNote() {
@@ -290,7 +293,9 @@
         const lineStart = getLineStart(text, pos);
         const indent = getIndent(text, lineStart);
 
-        const insertion = '\n' + indent + '• ';
+        // CHANGED: add hang spaces after bullet
+        const insertion = '\n' + indent + '• ' + HANG;
+
         el.value = text.slice(0, pos) + insertion + text.slice(pos);
         el.selectionStart = el.selectionEnd = pos + insertion.length;
 
